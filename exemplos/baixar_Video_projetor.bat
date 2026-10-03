@@ -1,0 +1,1 @@
+yt-dlp -f "bv*[height<=1080][vcodec^=avc1]+ba[acodec^=mp4a]/b[height<=1080][vcodec^=avc1]" --merge-output-format mp4 ""

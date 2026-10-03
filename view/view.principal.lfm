@@ -1,0 +1,459 @@
+object PrincipalView: TPrincipalView
+  Left = 400
+  Height = 560
+  Top = 150
+  Width = 1140
+  Caption = 'FFMPEG'
+  ClientHeight = 560
+  ClientWidth = 1140
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
+  object GroupBoxBaixarYoutube: TGroupBox
+    Left = 8
+    Height = 68
+    Top = 8
+    Width = 731
+    AutoSize = True
+    Caption = 'Baixar do Youtube'
+    ClientHeight = 48
+    ClientWidth = 727
+    TabOrder = 0
+    object EditLink: TEdit
+      AnchorSideLeft.Control = GroupBoxBaixarYoutube
+      AnchorSideBottom.Control = GroupBoxBaixarYoutube
+      AnchorSideBottom.Side = asrBottom
+      Left = 10
+      Height = 23
+      Top = 20
+      Width = 300
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+      BorderSpacing.Bottom = 5
+      TabOrder = 0
+      TextHint = 'https://www.youtube.com/watch?v=...'
+    end
+    object LabelLink: TLabel
+      AnchorSideLeft.Control = EditLink
+      AnchorSideBottom.Control = EditLink
+      Left = 10
+      Height = 15
+      Top = 0
+      Width = 22
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Bottom = 5
+      Caption = 'Link'
+    end
+    object RadioGroupTipo: TRadioGroup
+      AnchorSideLeft.Control = EditLink
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = EditLink
+      AnchorSideBottom.Side = asrBottom
+      Left = 320
+      Height = 43
+      Top = 0
+      Width = 185
+      Anchors = [akLeft, akBottom]
+      AutoFill = True
+      BorderSpacing.Left = 10
+      Caption = 'Tipo'
+      ChildSizing.LeftRightSpacing = 6
+      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+      ChildSizing.EnlargeVertical = crsHomogenousChildResize
+      ChildSizing.ShrinkHorizontal = crsScaleChilds
+      ChildSizing.ShrinkVertical = crsScaleChilds
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 2
+      ClientHeight = 23
+      ClientWidth = 181
+      Columns = 2
+      ItemIndex = 0
+      Items.Strings = (
+        'Vídeo'
+        'Musica MP3'
+      )
+      OnClick = RadioGroupTipoClick
+      TabOrder = 1
+    end
+    object CheckBoxConverter: TCheckBox
+      AnchorSideLeft.Control = RadioGroupTipo
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = RadioGroupTipo
+      AnchorSideBottom.Side = asrBottom
+      Left = 515
+      Height = 19
+      Top = 22
+      Width = 170
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+      BorderSpacing.Bottom = 2
+      Caption = 'Converter se não for H.264'
+      Hint = 'Se o vídeo não existir em H.264 no YouTube, baixa o melhor até 1080p e converte com o preset do projetor'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+    end
+    object btnBaixar: TBotao
+      AnchorSideLeft.Control = CheckBoxConverter
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = RadioGroupTipo
+      AnchorSideBottom.Side = asrBottom
+      Left = 695
+      Height = 34
+      Hint = 'Baixa o link do campo Link'
+      Top = 9
+      Width = 120
+      Images = ImageList24
+      ImageIndex = 0
+      TextoAguarde = 'Aguarde...'
+      Caption = 'Baixar'
+      Font.Color = clWhite
+      Font.Height = -16
+      Font.Name = 'Segoe UI'
+      TabOrder = 3
+      OnClick = btnBaixarClick
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+    end
+    object btnImportarLista: TBotao
+      AnchorSideLeft.Control = btnBaixar
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = btnBaixar
+      AnchorSideBottom.Side = asrBottom
+      Left = 825
+      Height = 34
+      Hint = 'Baixa todos os links de um arquivo .txt (um link por linha)'
+      Top = 9
+      Width = 140
+      TextoAguarde = 'Aguarde...'
+      Caption = 'Importar Lista'
+      Font.Color = clWhite
+      Font.Height = -16
+      Font.Name = 'Segoe UI'
+      TabOrder = 4
+      OnClick = btnImportarListaClick
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+    end
+    object btnAtualizar: TBotao
+      AnchorSideLeft.Control = btnImportarLista
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = btnImportarLista
+      AnchorSideBottom.Side = asrBottom
+      Left = 975
+      Height = 34
+      Hint = 'Atualiza o yt-dlp (na primeira vez, baixa uma cópia oficial para a pasta do programa)'
+      Top = 9
+      Width = 140
+      TextoAguarde = 'Aguarde...'
+      Caption = 'Atualizar yt-dlp'
+      Font.Color = clWhite
+      Font.Height = -16
+      Font.Name = 'Segoe UI'
+      TabOrder = 5
+      OnClick = btnAtualizarClick
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+      BorderSpacing.Right = 10
+    end
+  end
+  object GroupBoxConverter: TGroupBox
+    AnchorSideLeft.Control = GroupBoxBaixarYoutube
+    AnchorSideTop.Control = GroupBoxBaixarYoutube
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = GroupBoxBaixarYoutube
+    AnchorSideRight.Side = asrBottom
+    Left = 8
+    Height = 68
+    Top = 86
+    Width = 731
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 10
+    Caption = 'Converter Vídeo'
+    ClientHeight = 48
+    ClientWidth = 727
+    TabOrder = 1
+    object EditLocal: TEdit
+      AnchorSideLeft.Control = GroupBoxConverter
+      AnchorSideBottom.Control = GroupBoxConverter
+      AnchorSideBottom.Side = asrBottom
+      Left = 10
+      Height = 23
+      Top = 20
+      Width = 302
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+      BorderSpacing.Bottom = 5
+      ParentShowHint = False
+      ReadOnly = True
+      ShowHint = True
+      TabOrder = 0
+      TextHint = 'clique na lupa para escolher os vídeos'
+    end
+    object LabelArquivo: TLabel
+      AnchorSideLeft.Control = EditLocal
+      AnchorSideBottom.Control = EditLocal
+      Left = 10
+      Height = 15
+      Top = 0
+      Width = 144
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Bottom = 5
+      Caption = 'Escolha o Arquivo de Vídeo'
+    end
+    object btnBusca: TSpeedButton
+      AnchorSideLeft.Control = EditLocal
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = EditLocal
+      AnchorSideBottom.Side = asrBottom
+      Left = 317
+      Height = 24
+      Top = 19
+      Width = 24
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 5
+      Flat = True
+      Hint = 'Escolher os vídeos (pode marcar vários)'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnBuscaClick
+      Glyph.Data = {
+        36090000424D3609000000000000360000002800000018000000180000000100
+        2000000000000009000064000000640000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D27619F700000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000D27619F7D27619FFD27619F7000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000D276
+        19F7D27619FFD27619F700000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000D27619F7D276
+        19FFD27619F70000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        00000000000000000000000000000000000000000000D27619F7D27619FFD276
+        19F7000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000D4751518D27519D7D27619FFD276
+        19FFD27619FFD27519D7BF80200800000000D27619F7D27619FFD27619F70000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000D27619B7D27619FFD27619FFD27619FFD276
+        19FFD27619FFD27619FFD27619FFD27619F7D27619FFD27619F7000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        00000000000000000000D27619B7D27619FFD27619FFD2771967000000000000
+        000000000000D2771967D27619FFD27619FFD27619F700000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D4751518D27619FFD27619FFBF80200800000000000000000000
+        00000000000000000000BF802008D27619FFD27619FFBF802008000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D17619CFD27619FFD17619700000000000000000000000000000
+        0000000000000000000000000000D2761A77D27619FFD17619CF000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D27619FFD27619FF000000000000000000000000000000000000
+        000000000000000000000000000000000000D27619FFD27619FF000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D27619FFD27619FF000000000000000000000000000000000000
+        000000000000000000000000000000000000D27619FFD27619FF000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D27619FFD27619FF000000000000000000000000000000000000
+        000000000000000000000000000000000000D27619FFD27619FF000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D27619DFD27619FFD2761A770000000000000000000000000000
+        0000000000000000000000000000D1761970D27619FFD27619DF000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000D4751518D27619FFD27619FFCF70101000000000000000000000
+        00000000000000000000BF802008D27619FFD27619FFD4751518000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        00000000000000000000D27619B7D27619FFD27619FFD2771967000000000000
+        000000000000D2771967D27619FFD27619FFD27619B700000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000D27619B7D27619FFD27619FFD27619FFD276
+        19FFD27619FFD27619FFD27619FFD27619B70000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000CF701010D27519D7D27619FFD276
+        19FFD27619FFD27619DFCF781820000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000
+      }
+    end
+    object ComboBoxTipo: TComboBox
+      AnchorSideLeft.Control = btnBusca
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = btnBusca
+      AnchorSideBottom.Side = asrBottom
+      Left = 351
+      Height = 23
+      Top = 20
+      Width = 236
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+      ItemHeight = 15
+      Style = csDropDownList
+      TabOrder = 1
+    end
+    object LabelTipo: TLabel
+      AnchorSideLeft.Control = ComboBoxTipo
+      AnchorSideBottom.Control = ComboBoxTipo
+      Left = 351
+      Height = 15
+      Top = 0
+      Width = 70
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Bottom = 5
+      Caption = 'Tipo de Saída'
+    end
+    object btnConverter: TBotao
+      AnchorSideLeft.Control = ComboBoxTipo
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideBottom.Control = ComboBoxTipo
+      AnchorSideBottom.Side = asrBottom
+      Left = 597
+      Height = 34
+      Top = 9
+      Width = 120
+      Images = ImageList24
+      ImageIndex = 1
+      TextoAguarde = 'Aguarde...'
+      Caption = 'Converter'
+      Font.Color = clWhite
+      Font.Height = -16
+      Font.Name = 'Segoe UI'
+      TabOrder = 2
+      OnClick = btnConverterClick
+      Anchors = [akLeft, akBottom]
+      BorderSpacing.Left = 10
+      BorderSpacing.Right = 10
+    end
+  end
+  object GroupBoxAndamento: TGroupBox
+    AnchorSideLeft.Control = GroupBoxBaixarYoutube
+    AnchorSideTop.Control = GroupBoxConverter
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = GroupBoxBaixarYoutube
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 8
+    Height = 388
+    Top = 164
+    Width = 1124
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Top = 10
+    BorderSpacing.Bottom = 8
+    Caption = 'Andamento'
+    ClientHeight = 368
+    ClientWidth = 1120
+    TabOrder = 2
+    object LabelStatus: TLabel
+      AnchorSideLeft.Control = GroupBoxAndamento
+      AnchorSideTop.Control = GroupBoxAndamento
+      Left = 10
+      Height = 15
+      Top = 6
+      Width = 38
+      BorderSpacing.Left = 10
+      BorderSpacing.Top = 6
+      Caption = 'Pronto.'
+    end
+    object btnCancelar: TBotao
+      AnchorSideTop.Control = GroupBoxAndamento
+      AnchorSideRight.Control = GroupBoxAndamento
+      AnchorSideRight.Side = asrBottom
+      Left = 990
+      Height = 34
+      Hint = 'Para o download ou a conversão em andamento'
+      Top = 6
+      Width = 120
+      TextoAguarde = 'Cancelando...'
+      Caption = 'Cancelar'
+      Font.Color = clWhite
+      Font.Height = -16
+      Font.Name = 'Segoe UI'
+      TabOrder = 0
+      OnClick = btnCancelarClick
+      Anchors = [akTop, akRight]
+      BorderSpacing.Top = 6
+      BorderSpacing.Right = 10
+    end
+    object ProgressBar: TProgressBar
+      AnchorSideLeft.Control = GroupBoxAndamento
+      AnchorSideTop.Control = LabelStatus
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = btnCancelar
+      Left = 10
+      Height = 18
+      Top = 25
+      Width = 970
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 10
+      BorderSpacing.Top = 4
+      BorderSpacing.Right = 10
+      TabOrder = 1
+    end
+    object MemoLog: TMemo
+      AnchorSideLeft.Control = GroupBoxAndamento
+      AnchorSideTop.Control = btnCancelar
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = GroupBoxAndamento
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = GroupBoxAndamento
+      AnchorSideBottom.Side = asrBottom
+      Left = 10
+      Height = 310
+      Top = 48
+      Width = 1100
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BorderSpacing.Left = 10
+      BorderSpacing.Top = 8
+      BorderSpacing.Right = 10
+      BorderSpacing.Bottom = 10
+      Font.Height = -12
+      Font.Name = 'Consolas'
+      ParentFont = False
+      ReadOnly = True
+      ScrollBars = ssAutoBoth
+      TabOrder = 2
+      WordWrap = False
+    end
+  end
+  object ImageList24: TImageList
+    Height = 24
+    Width = 24
+    Left = 232
+    Bitmap = {
+      4C7A0200000018000000180000005E0100000000000078DAED57AD1282401026
+      128D44229168241A69BEC63523D16824128D46A3D168F43188443C66EEC69D9D
+      DD6361D551879D6138EEE7DBDBBB6F7F88A2457E457A270BFEFFE05BB89CC3B7
+      CD54897D70901B8C6F5F85FBAC14F855FF940D6817A06D9436401D58CC8BEEA0
+      7A1736A3C3BC83834E87D170772EC7BF0D7FAE08F033057CBE64B1453E5C330C
+      7CBD115CBC6BF838D10FF289D83558DBD9674BCC29DD98975A88DD70FB72633B
+      D407F35A3396CBC1DC15A3B721D6C592B30273D6019BFC9965684E31923BD6DC
+      F85087C03300ED339AD77136D8BEABAF0D405F02DB7EEFC8A61CDDF92037497E
+      B09F2DAAA712624D27C9330C7E90139EC74AFC3A807F54E2E3F38961CDE996B4
+      427C7FBF25C19B13E2470AF42584AF5D02F106DFD79EE1664A6074211F83F52B
+      A1BB453ED648FD47121F4231421A1F88D889ED30A17D8FC537E2BF622C3EF753
+      E3F3CCFC9229F3D895C98F59F4E7F200858E90DB
+    }
+  end
+end

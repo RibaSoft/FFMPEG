@@ -1,0 +1,21 @@
+.git/
+backup/
+bkp/
+lib/
+
+*.exe
+*.baixando
+*.lps
+*.res
+*.log
+*.dbg
+
+# Mídia que caia na pasta do projeto por engano (download ou conversão apontados para cá)
+*.mp4
+*.mkv
+*.webm
+*.mp3
+*.m4a
+*.part
+*.ytdl
+.baixados.txt
