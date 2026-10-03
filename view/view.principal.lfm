@@ -1,25 +1,25 @@
 object PrincipalView: TPrincipalView
-  Left = 400
+  Left = 659
   Height = 560
-  Top = 150
+  Top = 155
   Width = 1140
   Caption = 'FFMPEG'
   ClientHeight = 560
   ClientWidth = 1140
+  Position = poScreenCenter
+  LCLVersion = '4.8.0.0'
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  Position = poScreenCenter
-  LCLVersion = '4.8.0.0'
   object GroupBoxBaixarYoutube: TGroupBox
     Left = 8
     Height = 68
     Top = 8
-    Width = 731
+    Width = 1117
     AutoSize = True
     Caption = 'Baixar do Youtube'
     ClientHeight = 48
-    ClientWidth = 727
+    ClientWidth = 1113
     TabOrder = 0
     object EditLink: TEdit
       AnchorSideLeft.Control = GroupBoxBaixarYoutube
@@ -74,8 +74,8 @@ object PrincipalView: TPrincipalView
         'Vídeo'
         'Musica MP3'
       )
-      OnClick = RadioGroupTipoClick
       TabOrder = 1
+      OnClick = RadioGroupTipoClick
     end
     object CheckBoxConverter: TCheckBox
       AnchorSideLeft.Control = RadioGroupTipo
@@ -84,15 +84,17 @@ object PrincipalView: TPrincipalView
       AnchorSideBottom.Side = asrBottom
       Left = 515
       Height = 19
+      Hint = 'Se o vídeo não existir em H.264 no YouTube, baixa o melhor até 1080p e converte com o preset do projetor'
       Top = 22
-      Width = 170
+      Width = 158
       Anchors = [akLeft, akBottom]
       BorderSpacing.Left = 10
       BorderSpacing.Bottom = 2
       Caption = 'Converter se não for H.264'
-      Hint = 'Se o vídeo não existir em H.264 no YouTube, baixa o melhor até 1080p e converte com o preset do projetor'
+      Checked = True
       ParentShowHint = False
       ShowHint = True
+      State = cbChecked
       TabOrder = 2
     end
     object btnBaixar: TBotao
@@ -100,7 +102,7 @@ object PrincipalView: TPrincipalView
       AnchorSideLeft.Side = asrBottom
       AnchorSideBottom.Control = RadioGroupTipo
       AnchorSideBottom.Side = asrBottom
-      Left = 695
+      Left = 683
       Height = 34
       Hint = 'Baixa o link do campo Link'
       Top = 9
@@ -122,7 +124,7 @@ object PrincipalView: TPrincipalView
       AnchorSideLeft.Side = asrBottom
       AnchorSideBottom.Control = btnBaixar
       AnchorSideBottom.Side = asrBottom
-      Left = 825
+      Left = 813
       Height = 34
       Hint = 'Baixa todos os links de um arquivo .txt (um link por linha)'
       Top = 9
@@ -142,7 +144,7 @@ object PrincipalView: TPrincipalView
       AnchorSideLeft.Side = asrBottom
       AnchorSideBottom.Control = btnImportarLista
       AnchorSideBottom.Side = asrBottom
-      Left = 975
+      Left = 963
       Height = 34
       Hint = 'Atualiza o yt-dlp (na primeira vez, baixa uma cópia oficial para a pasta do programa)'
       Top = 9
@@ -168,13 +170,13 @@ object PrincipalView: TPrincipalView
     Left = 8
     Height = 68
     Top = 86
-    Width = 731
+    Width = 1117
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BorderSpacing.Top = 10
     Caption = 'Converter Vídeo'
     ClientHeight = 48
-    ClientWidth = 727
+    ClientWidth = 1113
     TabOrder = 1
     object EditLocal: TEdit
       AnchorSideLeft.Control = GroupBoxConverter
@@ -183,7 +185,7 @@ object PrincipalView: TPrincipalView
       Left = 10
       Height = 23
       Top = 20
-      Width = 302
+      Width = 601
       Anchors = [akLeft, akBottom]
       BorderSpacing.Left = 10
       BorderSpacing.Bottom = 5
@@ -209,17 +211,14 @@ object PrincipalView: TPrincipalView
       AnchorSideLeft.Side = asrBottom
       AnchorSideBottom.Control = EditLocal
       AnchorSideBottom.Side = asrBottom
-      Left = 317
+      Left = 616
       Height = 24
+      Hint = 'Escolher os vídeos (pode marcar vários)'
       Top = 19
       Width = 24
       Anchors = [akLeft, akBottom]
       BorderSpacing.Left = 5
       Flat = True
-      Hint = 'Escolher os vídeos (pode marcar vários)'
-      ParentShowHint = False
-      ShowHint = True
-      OnClick = btnBuscaClick
       Glyph.Data = {
         36090000424D3609000000000000360000002800000018000000180000000100
         2000000000000009000064000000640000000000000000000000000000000000
@@ -296,16 +295,19 @@ object PrincipalView: TPrincipalView
         0000000000000000000000000000000000000000000000000000000000000000
         0000000000000000000000000000000000000000000000000000
       }
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = btnBuscaClick
     end
     object ComboBoxTipo: TComboBox
       AnchorSideLeft.Control = btnBusca
       AnchorSideLeft.Side = asrBottom
       AnchorSideBottom.Control = btnBusca
       AnchorSideBottom.Side = asrBottom
-      Left = 351
+      Left = 650
       Height = 23
       Top = 20
-      Width = 236
+      Width = 303
       Anchors = [akLeft, akBottom]
       BorderSpacing.Left = 10
       ItemHeight = 15
@@ -315,7 +317,7 @@ object PrincipalView: TPrincipalView
     object LabelTipo: TLabel
       AnchorSideLeft.Control = ComboBoxTipo
       AnchorSideBottom.Control = ComboBoxTipo
-      Left = 351
+      Left = 650
       Height = 15
       Top = 0
       Width = 70
@@ -328,10 +330,10 @@ object PrincipalView: TPrincipalView
       AnchorSideLeft.Side = asrBottom
       AnchorSideBottom.Control = ComboBoxTipo
       AnchorSideBottom.Side = asrBottom
-      Left = 597
+      Left = 963
       Height = 34
       Top = 9
-      Width = 120
+      Width = 140
       Images = ImageList24
       ImageIndex = 1
       TextoAguarde = 'Aguarde...'
@@ -357,13 +359,13 @@ object PrincipalView: TPrincipalView
     Left = 8
     Height = 388
     Top = 164
-    Width = 1124
+    Width = 1117
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Top = 10
     BorderSpacing.Bottom = 8
     Caption = 'Andamento'
     ClientHeight = 368
-    ClientWidth = 1120
+    ClientWidth = 1113
     TabOrder = 2
     object LabelStatus: TLabel
       AnchorSideLeft.Control = GroupBoxAndamento
@@ -371,7 +373,7 @@ object PrincipalView: TPrincipalView
       Left = 10
       Height = 15
       Top = 6
-      Width = 38
+      Width = 39
       BorderSpacing.Left = 10
       BorderSpacing.Top = 6
       Caption = 'Pronto.'
@@ -380,11 +382,11 @@ object PrincipalView: TPrincipalView
       AnchorSideTop.Control = GroupBoxAndamento
       AnchorSideRight.Control = GroupBoxAndamento
       AnchorSideRight.Side = asrBottom
-      Left = 990
+      Left = 963
       Height = 34
       Hint = 'Para o download ou a conversão em andamento'
       Top = 6
-      Width = 120
+      Width = 140
       TextoAguarde = 'Cancelando...'
       Caption = 'Cancelar'
       Font.Color = clWhite
@@ -404,7 +406,7 @@ object PrincipalView: TPrincipalView
       Left = 10
       Height = 18
       Top = 25
-      Width = 970
+      Width = 943
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Left = 10
       BorderSpacing.Top = 4
@@ -422,7 +424,7 @@ object PrincipalView: TPrincipalView
       Left = 10
       Height = 310
       Top = 48
-      Width = 1100
+      Width = 1093
       Anchors = [akTop, akLeft, akRight, akBottom]
       BorderSpacing.Left = 10
       BorderSpacing.Top = 8
@@ -440,7 +442,8 @@ object PrincipalView: TPrincipalView
   object ImageList24: TImageList
     Height = 24
     Width = 24
-    Left = 232
+    Left = 336
+    Top = 344
     Bitmap = {
       4C7A0200000018000000180000005E0100000000000078DAED57AD1282401026
       128D44229168241A69BEC63523D16824128D46A3D168F43188443C66EEC69D9D
