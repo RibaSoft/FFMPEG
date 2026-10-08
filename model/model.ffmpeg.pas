@@ -20,17 +20,26 @@ type
     //Funções
     function Executavel: string;
     function ExecutavelSonda: string;
-    function ParametrosConverter(const AEntrada, ASaida: string; APreset: TPresetConversao): TStringArray;
+    function ParametrosConverter(const AEntrada, ASaida: string; APreset: TPresetConversao;
+      AInicio, ADuracao: double): TStringArray;
     function ParametrosSonda(const AArquivo: string): TStringArray;
     function LeSonda(ASaida: TStrings): TSonda;
     function PrecisaConverter(const ASonda: TSonda): boolean;
-    function NomeSaida(const AEntrada, APasta: string): string;
+    function NomeSaida(const AEntrada, APasta: string; APreset: TPresetConversao): string;
+    function NomePedaco(const ASaida: string; ANumero: integer): string;
     function LeLinha(const ALinha: string; ADuracao: double; out AProgresso: TProgresso; out ATexto: string): TTipoLinha;
   private
     function EhChaveProgresso(const AChave: string): boolean;
+    function Segundos(AValor: double): string;
   end;
 
 implementation
+
+const
+  // O "parte001" dos pedaços do WhatsApp: o padrão que o muxer segment do ffmpeg numera, e o
+  // mesmo nome no Format do Pascal (que não conhece o "%03d", mas o "%.3d" zera igual).
+  PEDACO_PADRAO_FFMPEG = '_parte%03d.mp4';
+  PEDACO_PADRAO_PASCAL = '_parte%.3d.mp4';
 
 //================================================================ CREATE ======================================================\\
 constructor TFFmpegModel.Create;
@@ -67,13 +76,36 @@ end;
 // (-ac 2) e só a primeira trilha de áudio. Projetor: o comando do exemplos\para projetor.txt,
 // sem tirar nada.
 
+// WhatsApp: o lado MENOR no máximo 720 (vídeo de celular é em pé — limitar a altura, como no
+// site, o deixaria estreito); o resto igual ao site. Sai em pedaços de PEDACO_SEGUNDOS pelo
+// muxer segment, que só corta em keyframe: o -force_key_frames põe um keyframe a cada 30s
+// exatos. ⚠ Sem o -segment_time_delta o corte NÃO sai exato: o keyframe forçado chega ao
+// muxer um fio antes dos 30s (arredondamento) e o corte pula para o keyframe natural seguinte
+// (deu um pedaço de 38s no teste). 0.01 é menos que um quadro até 100 fps. O faststart vai para
+// cada pedaço pelo -segment_format_options. Provado em 08/10/2026: pedaços de 30,00s com
+// 1080x1920 30fps (saiu 720x1280), 1281x721 29,97fps (saiu 1278x720) e 640x360 25fps.
+
+// Corte (AInicio / ADuracao em segundos; 0 = não corta): o -ss ANTES do -i pula o começo e,
+// recodificando, o ffmpeg acerta o quadro exato (provado: com -ss 3 começou no quadro 75 de um
+// 25fps). O tempo da saída recomeça do zero — os keyframes de 30s contam do novo começo, e o
+// out_time da -progress também (o percentual usa a duração já cortada). O -t depois do -i é
+// quanto da entrada fica.
+
 // Na leitura: -v error deixa só os erros no log, e a -progress pipe:1 manda o andamento no
 // formato chave=valor (o LeLinha separa um do outro).
-function TFFmpegModel.ParametrosConverter(const AEntrada, ASaida: string; APreset: TPresetConversao): TStringArray;
+function TFFmpegModel.ParametrosConverter(const AEntrada, ASaida: string; APreset: TPresetConversao;
+  AInicio, ADuracao: double): TStringArray;
 begin
   Result := nil;
-  AdicionaParametros(Result, ['-hide_banner', '-nostdin', '-y', '-v', 'error', '-progress', 'pipe:1', '-nostats',
-    '-i', AEntrada]);
+  AdicionaParametros(Result, ['-hide_banner', '-nostdin', '-y', '-v', 'error', '-progress', 'pipe:1', '-nostats']);
+
+  if (AInicio > 0) then
+    AdicionaParametros(Result, ['-ss', Segundos(AInicio)]);
+
+  AdicionaParametros(Result, ['-i', AEntrada]);
+
+  if (ADuracao > 0) then
+    AdicionaParametros(Result, ['-t', Segundos(ADuracao)]);
 
   case APreset of
     pcSite1080:
@@ -93,9 +125,23 @@ begin
         '-vf', 'scale=-2:''trunc(min(1080,ih)/2)*2''',
         '-c:v', 'libx264', '-profile:v', 'high', '-level', '4.1', '-pix_fmt', 'yuv420p', '-crf', '20',
         '-c:a', 'aac', '-b:a', '160k']);
+
+    pcWhatsApp:
+      AdicionaParametros(Result, ['-map', '0:v:0', '-map', '0:a:0?',
+        '-vf', 'scale=''trunc(iw*min(1,720/min(iw,ih))/2)*2'':''trunc(ih*min(1,720/min(iw,ih))/2)*2''',
+        '-c:v', 'libx264', '-preset', 'medium', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-crf', '23',
+        '-force_key_frames', Format('expr:gte(t,n_forced*%d)', [PEDACO_SEGUNDOS]),
+        '-c:a', 'aac', '-b:a', '128k', '-ac', '2']);
   end;
 
-  AdicionaParametros(Result, ['-movflags', '+faststart', ASaida]);
+  if (APreset = pcWhatsApp) then
+    // ⚠ O nome vira PADRÃO do segment: um "%" que já esteja no nome do arquivo vai dobrado.
+    AdicionaParametros(Result, ['-f', 'segment', '-segment_time', IntToStr(PEDACO_SEGUNDOS),
+      '-segment_time_delta', '0.01', '-segment_start_number', '1', '-reset_timestamps', '1',
+      '-segment_format_options', 'movflags=+faststart',
+      StringReplace(ChangeFileExt(ASaida, ''), '%', '%%', [rfReplaceAll]) + PEDACO_PADRAO_FFMPEG])
+  else
+    AdicionaParametros(Result, ['-movflags', '+faststart', ASaida]);
 end;
 
 //=========================================================== PARAMETROS SONDA =================================================\\
@@ -158,7 +204,9 @@ end;
 //=============================================================== NOME SAIDA ===================================================\\
 // "D:\Vídeos\festa.mkv" + pasta "E:\Site" -> "E:\Site\conv_festa.mp4". Se já existir, numera:
 // "conv_festa (2).mp4", "(3)", ... — nunca sobrescreve um convertido anterior.
-function TFFmpegModel.NomeSaida(const AEntrada, APasta: string): string;
+// WhatsApp: o nome devolvido não chega a existir — é a base dos pedaços (NomePedaco), e o que
+// se confere é se o PRIMEIRO pedaço já existe.
+function TFFmpegModel.NomeSaida(const AEntrada, APasta: string; APreset: TPresetConversao): string;
 var
   auxPasta, auxBase: string;
   I: integer;
@@ -168,11 +216,19 @@ begin
   Result := auxPasta + auxBase + '.mp4';
 
   I := 2;
-  while FileExists(Result) do
+  while FileExists(iif(APreset = pcWhatsApp, NomePedaco(Result, 1), Result)) do
   begin
     Result := Format('%s%s (%d).mp4', [auxPasta, auxBase, I]);
     Inc(I);
   end;
+end;
+
+//============================================================== NOME PEDACO ===================================================\\
+// "E:\Site\conv_festa.mp4", 2 -> "E:\Site\conv_festa_parte002.mp4": o nome que o segment dá ao
+// pedaço número ANumero (o primeiro é o 1, -segment_start_number).
+function TFFmpegModel.NomePedaco(const ASaida: string; ANumero: integer): string;
+begin
+  Result := ChangeFileExt(ASaida, '') + Format(PEDACO_PADRAO_PASCAL, [ANumero]);
 end;
 
 //=============================================================== LE LINHA =====================================================\\
@@ -250,6 +306,18 @@ begin
   for I := 1 to Length(AChave) do
     if not (AChave[I] in ['a'..'z', '0'..'9', '_']) then
       Exit(False);
+end;
+
+//================================================================ SEGUNDOS ====================================================\\
+// Número para a linha de comando do ffmpeg: sempre com PONTO decimal, nunca a vírgula do
+// Windows em português.
+function TFFmpegModel.Segundos(AValor: double): string;
+var
+  auxFS: TFormatSettings;
+begin
+  auxFS := DefaultFormatSettings;
+  auxFS.DecimalSeparator := '.';
+  Result := FormatFloat('0.###', AValor, auxFS);
 end;
 
 //==============================================================================================================================\\

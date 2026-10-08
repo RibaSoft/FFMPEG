@@ -28,6 +28,8 @@ type
     FTipoBaixar: TTipoBaixar;
     FConverteSeNecessario: boolean;
     FPreset: TPresetConversao;
+    FCorteInicio: double;   // segundos eliminados do começo de cada vídeo (0 = nada)
+    FCorteFim: double;      // segundos eliminados do fim de cada vídeo (0 = nada)
     FOnLog: TLogEvent;
     FOnProgresso: TProgressoEvent;
 
@@ -72,7 +74,9 @@ type
     procedure ConverteBaixados;
     function Sonda(const AArquivo: string; out ASonda: TSonda): boolean;
     function ConverteArquivo(const AEntrada, ASaida: string; APreset: TPresetConversao; const ATitulo: string;
-      ADuracao: double): boolean;
+      AInicio, AManter, ADuracao: double): boolean;
+    function ContaPedacos(const ASaida: string): integer;
+    procedure ApagaSaida(const ASaida: string; APreset: TPresetConversao);
   protected
     procedure Execute; override;
   public
@@ -85,6 +89,8 @@ type
     property TipoBaixar: TTipoBaixar read FTipoBaixar write FTipoBaixar;
     property ConverteSeNecessario: boolean read FConverteSeNecessario write FConverteSeNecessario;
     property Preset: TPresetConversao read FPreset write FPreset;
+    property CorteInicio: double read FCorteInicio write FCorteInicio;
+    property CorteFim: double read FCorteFim write FCorteFim;
     property OnLog: TLogEvent read FOnLog write FOnLog;
     property OnProgresso: TProgressoEvent read FOnProgresso write FOnProgresso;
 
@@ -107,6 +113,8 @@ begin
   FTipoBaixar := tbVideo;
   FConverteSeNecessario := False;
   FPreset := pcSite1080;
+  FCorteInicio := 0;
+  FCorteFim := 0;
   FCancelado := False;
   FErros := 0;
   FTrava := TCriticalSection.Create;
@@ -368,7 +376,7 @@ begin
     auxTemp := ChangeFileExt(auxArquivo, SUFIXO_TEMPORARIO);
     auxFinal := ChangeFileExt(auxArquivo, '.mp4');
 
-    if not ConverteArquivo(auxArquivo, auxTemp, pcProjetor, 'Convertendo ' + auxNome, auxSonda.Duracao) then
+    if not ConverteArquivo(auxArquivo, auxTemp, pcProjetor, 'Convertendo ' + auxNome, 0, 0, auxSonda.Duracao) then
       Continue;
 
     if DeleteFile(auxArquivo) and RenameFile(auxTemp, auxFinal) then
@@ -382,13 +390,15 @@ begin
 end;
 
 //=============================================================== CONVERTE =====================================================\\
-// A conversão pedida pela tela: cada arquivo vira "conv_<nome>.mp4" na pasta escolhida.
-// Um arquivo que falha não para a fila.
+// A conversão pedida pela tela: cada arquivo vira "conv_<nome>.mp4" na pasta escolhida (no
+// WhatsApp, "conv_<nome>_parte001.mp4", "_parte002"...). Um arquivo que falha não para a fila.
+// O corte do início/fim vale para todos os arquivos da fila.
 procedure TTarefaThread.Converte;
 var
-  I: integer;
-  auxEntrada, auxSaida, auxTitulo: string;
+  I, auxPedacos: integer;
+  auxEntrada, auxSaida, auxTitulo, auxNome: string;
   auxSonda: TSonda;
+  auxDuracao, auxManter: double;
 begin
   FFFmpeg := FFmpegModel;
   if (FFFmpeg.Executavel = EmptyStr) or (FFFmpeg.ExecutavelSonda = EmptyStr) then
@@ -399,13 +409,17 @@ begin
   end;
 
   Log(Format('Convertendo %d arquivo(s) para %s - %s', [FItens.Count, FPasta, PRESET_NOME[FPreset]]));
+  if (FCorteInicio > 0) or (FCorteFim > 0) then
+    Log(Format('Eliminando %s s do início e %s s do fim de cada vídeo.',
+      [FormatFloat('0.###', FCorteInicio), FormatFloat('0.###', FCorteFim)]));
 
   for I := 0 to Pred(FItens.Count) do
   begin
     if FCancelado then Exit;
 
     auxEntrada := FItens[I];
-    auxTitulo := Format('%d/%d: %s', [I + 1, FItens.Count, ExtractFileName(auxEntrada)]);
+    auxNome := ExtractFileName(auxEntrada);
+    auxTitulo := Format('%d/%d: %s', [I + 1, FItens.Count, auxNome]);
     Log('Convertendo ' + auxTitulo);
 
     if not Sonda(auxEntrada, auxSonda) then
@@ -417,12 +431,48 @@ begin
     if (auxSonda.CodecVideo = EmptyStr) then
     begin
       Inc(FErros);
-      Log('Não tem trilha de vídeo: ' + ExtractFileName(auxEntrada));
+      Log('Não tem trilha de vídeo: ' + auxNome);
       Continue;
     end;
 
-    auxSaida := FFFmpeg.NomeSaida(auxEntrada, FPasta);
-    if ConverteArquivo(auxEntrada, auxSaida, FPreset, auxTitulo, auxSonda.Duracao) then
+    // O corte do fim é contado a partir da duração (o ffmpeg só sabe "quanto manter"): sem
+    // ela, não há como saber onde parar.
+    if (FCorteFim > 0) and (auxSonda.Duracao <= 0) then
+    begin
+      Inc(FErros);
+      Log('Duração desconhecida, não dá para cortar o fim: ' + auxNome);
+      Continue;
+    end;
+
+    // auxDuracao = o que sobra depois dos cortes (o percentual é sobre ela; 0 = desconhecida).
+    // auxManter = o -t do ffmpeg: só quando há corte no fim (0 = vai até o fim do arquivo).
+    auxDuracao := 0;
+    if (auxSonda.Duracao > 0) then
+    begin
+      auxDuracao := auxSonda.Duracao - FCorteInicio - FCorteFim;
+      if (auxDuracao <= 0) then
+      begin
+        Inc(FErros);
+        Log(Format('O corte é maior que o vídeo (%s): %s', [Riba.FormataTempo(auxSonda.Duracao), auxNome]));
+        Continue;
+      end;
+    end;
+
+    auxManter := 0;
+    if (FCorteFim > 0) then
+      auxManter := auxDuracao;
+
+    auxSaida := FFFmpeg.NomeSaida(auxEntrada, FPasta, FPreset);
+    if not ConverteArquivo(auxEntrada, auxSaida, FPreset, auxTitulo, FCorteInicio, auxManter, auxDuracao) then
+      Continue;
+
+    if (FPreset = pcWhatsApp) then
+    begin
+      auxPedacos := ContaPedacos(auxSaida);
+      Log(Format('Salvo em %d pedaço(s): %s até %s', [auxPedacos, FFFmpeg.NomePedaco(auxSaida, 1),
+        ExtractFileName(FFFmpeg.NomePedaco(auxSaida, auxPedacos))]));
+    end
+    else
       Log('Salvo: ' + auxSaida);
   end;
 end;
@@ -515,8 +565,11 @@ end;
 
 //=========================================================== CONVERTE ARQUIVO =================================================\\
 // Uma conversão. Falhou ou foi cancelada: apaga a saída pela metade.
+//   AInicio  = segundos pulados no começo (0 = nenhum)
+//   AManter  = segundos que ficam a partir dali (0 = até o fim)
+//   ADuracao = duração do que vai sair, para o percentual (0 = desconhecida)
 function TTarefaThread.ConverteArquivo(const AEntrada, ASaida: string; APreset: TPresetConversao; const ATitulo: string;
-  ADuracao: double): boolean;
+  AInicio, AManter, ADuracao: double): boolean;
 var
   auxExe: string;
   auxCodigo: integer;
@@ -538,15 +591,14 @@ begin
   FDuracao := ADuracao;
   Progresso(FTitulo, 0, 'iniciando o ffmpeg...');
 
-  auxCodigo := Executa(auxExe, FFFmpeg.ParametrosConverter(AEntrada, ASaida, APreset), @LinhaFFmpeg);
+  auxCodigo := Executa(auxExe, FFFmpeg.ParametrosConverter(AEntrada, ASaida, APreset, AInicio, AManter), @LinhaFFmpeg);
   Result := (auxCodigo = 0) and not FCancelado;
 
   if Result then
     Progresso(FTitulo, 100, 'concluído')
   else
   begin
-    if FileExists(ASaida) then
-      DeleteFile(ASaida);
+    ApagaSaida(ASaida, APreset);
 
     if not FCancelado then
     begin
@@ -554,6 +606,31 @@ begin
       Log(Format('A conversão falhou (código %d): %s', [auxCodigo, ExtractFileName(AEntrada)]));
     end;
   end;
+end;
+
+//============================================================ CONTA PEDACOS ===================================================\\
+// Quantos pedaços do WhatsApp a conversão deixou: o segment numera em sequência a partir do 1.
+function TTarefaThread.ContaPedacos(const ASaida: string): integer;
+begin
+  Result := 0;
+  while FileExists(FFFmpeg.NomePedaco(ASaida, Result + 1)) do
+    Inc(Result);
+end;
+
+//============================================================= APAGA SAIDA ====================================================\\
+// A saída pela metade de uma conversão que falhou ou foi cancelada. No WhatsApp a saída são os
+// pedaços (o arquivo ASaida em si nunca existe).
+procedure TTarefaThread.ApagaSaida(const ASaida: string; APreset: TPresetConversao);
+var
+  I: integer;
+begin
+  if (APreset = pcWhatsApp) then
+  begin
+    for I := ContaPedacos(ASaida) downto 1 do
+      DeleteFile(FFFmpeg.NomePedaco(ASaida, I));
+  end
+  else if FileExists(ASaida) then
+    DeleteFile(ASaida);
 end;
 
 //============================================================= LINHA YTDLP ====================================================\\

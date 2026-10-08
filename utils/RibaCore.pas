@@ -60,11 +60,13 @@ type
     //Funções
     function Executavel: string;
     function ExecutavelSonda: string;
-    function ParametrosConverter(const AEntrada, ASaida: string; APreset: TPresetConversao): TStringArray;
+    function ParametrosConverter(const AEntrada, ASaida: string; APreset: TPresetConversao;
+      AInicio, ADuracao: double): TStringArray;
     function ParametrosSonda(const AArquivo: string): TStringArray;
     function LeSonda(ASaida: TStrings): TSonda;
     function PrecisaConverter(const ASonda: TSonda): boolean;
-    function NomeSaida(const AEntrada, APasta: string): string;
+    function NomeSaida(const AEntrada, APasta: string; APreset: TPresetConversao): string;
+    function NomePedaco(const ASaida: string; ANumero: integer): string;
     function LeLinha(const ALinha: string; ADuracao: double; out AProgresso: TProgresso; out ATexto: string): TTipoLinha;
   end;
 

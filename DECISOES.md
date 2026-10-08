@@ -57,6 +57,10 @@ Caminho relativo ao diretório corrente (`.\yt-dlp.exe`), como todo caminho Riba
 
 ### 4.2 "Converter se não for H.264" (checkbox, só vídeo)
 
+**Nasce marcado** (`Checked = True` no `.lfm`, decisão de 03/10/2026): quando o vídeo existe
+em H.264 o resultado é idêntico ao desmarcado (não converte nada); quando não existe, é a
+diferença entre ter o vídeo e o download falhar.
+
 Marcado, o formato ganha um fallback (`YTDLP_FORMATO_QUALQUER`: o melhor até 1080p). Depois do
 download, cada arquivo passa pelo `ffprobe`; o que não for H.264 + AAC (ou H.264 mudo) é
 convertido com o **preset do projetor** e **toma o lugar do original** (mesmo nome, `.mp4`).
@@ -72,6 +76,7 @@ inteiro), nunca aumenta a resolução.
 | Site 1080p | altura ≤1080, `-preset medium -profile:v high -crf 23`, **sem `-level`** | 1ª trilha, AAC 128k **estéreo** |
 | Site 720p | igual, altura ≤720 | igual |
 | Projetor 1080p | o comando de `exemplos\para projetor.txt` (`-level 4.1 -crf 20`) | todas as trilhas, AAC 160k |
+| Status WhatsApp | igual ao site, mas o **lado menor** ≤720; em **pedaços de 30s** (§ 4.4) | igual ao site |
 
 - Sem `-level` no site: o x264 escolhe; 4.1 fixo é pouco para 1080p60.
 - ⚠ **Altura ímpar**: o `scale=-2:'min(1080,ih)'` original deixava passar altura ímpar (721) e
@@ -79,6 +84,41 @@ inteiro), nunca aumenta a resolução.
   um 1281×721 → 1280×720 (03/10/2026).
 - Saída: `conv_<nome>.mp4` na pasta escolhida; se existir, `conv_<nome> (2).mp4`, `(3)`... —
   nunca sobrescreve.
+
+### 4.4 Status do WhatsApp (pedido de 08/10/2026)
+
+Saída cortada em pedaços de **exatos 30s** (`PEDACO_SEGUNDOS`); o último fica com a sobra.
+Um ffmpeg só, pelo muxer `segment` — não uma execução por pedaço (a barra de progresso e o
+cancelar continuam os mesmos).
+
+- Escala pelo **lado menor** ≤720: vídeo de celular é em pé, e limitar a altura (como no site)
+  deixaria um 1080×1920 com 404 de largura. 1080×1920 → 720×1280; 1281×721 → 1278×720.
+- O `segment` só corta em keyframe: `-force_key_frames expr:gte(t,n_forced*30)` põe um a cada
+  30s. ⚠ **Sem `-segment_time_delta 0.01` o corte não sai exato**: o keyframe forçado chega ao
+  muxer um fio antes dos 30s e o corte pula para o keyframe natural seguinte (deu 38s no teste).
+- `movflags=+faststart` em cada pedaço via `-segment_format_options` (conferido: `moov` antes
+  do `mdat`).
+- Nome: `conv_<nome>_parte001.mp4`, `_parte002`... A repetição se confere pelo `_parte001`:
+  existindo, vira `conv_<nome> (2)_parte001.mp4`. ⚠ O nome vai como **padrão** do segment:
+  `%` do nome do arquivo vai dobrado (`%%`). Provado com `vert 100%.mp4`.
+- Falhou ou cancelou: apaga **todos** os pedaços, inclusive os já completos.
+- Provado em 08/10/2026 (thread real, teste de console): 70,5s → 30,02 + 30,00 + 10,5;
+  60s → 30,05 + 30,00. O 1º pedaço tem ~0,02s a mais: é o "priming" do AAC, normal.
+
+### 4.5 Corte do início e do fim (`EditElimIni` / `EditElimFim`)
+
+Segundos **eliminados** do começo e do fim de **cada** vídeo da conversão, em qualquer preset
+(não vale para a conversão automática do download). Vazio = 0; aceita `2,5` ou `2.5`.
+
+- Início: `-ss` **antes** do `-i` — recodificando, o ffmpeg acerta o quadro (com `-ss 3`
+  começou no quadro 75 de um 25fps). O tempo da saída recomeça do zero: os 30s do WhatsApp e o
+  percentual contam do novo começo.
+- Fim: o ffmpeg só sabe "quanto manter" (`-t`), então é `duração − início − fim`, com a duração
+  do `ffprobe`. Sem duração conhecida, não corta o fim e conta erro. Corte ≥ duração: erro
+  naquele arquivo, a fila segue.
+- Número para o ffmpeg sempre com **ponto** (`TFFmpegModel.Segundos`), nunca a vírgula do
+  Windows em português.
+
 
 ## 5. Execução dos programas externos (`thread.tarefa`)
 

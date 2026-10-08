@@ -44,6 +44,8 @@ const
   PREFIXO_CONVERTIDO = 'conv_';
   // Arquivo temporário da conversão automática depois do download (vira o nome original no fim).
   SUFIXO_TEMPORARIO = '.convertendo.mp4';
+  // Status do WhatsApp: o vídeo sai cortado em pedaços deste tamanho (o último fica com a sobra).
+  PEDACO_SEGUNDOS = 30;
 
   FILTRO_VIDEOS = 'Vídeos|*.mp4;*.mkv;*.webm;*.mov;*.avi;*.wmv;*.flv;*.m4v;*.mpg;*.mpeg;*.ts;*.3gp|Todos os arquivos|*.*';
   FILTRO_LISTA = 'Lista de links (*.txt)|*.txt|Todos os arquivos|*.*';
@@ -54,7 +56,7 @@ type
   TTipoBaixar = (tbVideo, tbMP3);
 
   // ⚠ A ordem é a do ComboBoxTipo, que é preenchido em código a partir do PRESET_NOME.
-  TPresetConversao = (pcSite1080, pcSite720, pcProjetor);
+  TPresetConversao = (pcSite1080, pcSite720, pcProjetor, pcWhatsApp);
 
   TTipoTarefa = (ttBaixar, ttConverter, ttAtualizar);
 
@@ -81,7 +83,8 @@ const
   PRESET_NOME: array[TPresetConversao] of string = (
     'Site 1080p (MP4 H.264 + AAC)',
     'Site 720p - menor (MP4 H.264 + AAC)',
-    'Projetor 1080p (MP4 H.264 + AAC)');
+    'Projetor 1080p (MP4 H.264 + AAC)',
+    'Status WhatsApp - pedaços de 30s (MP4 H.264 + AAC)');
 
 implementation
 

@@ -18,12 +18,16 @@ type
     btnImportarLista: TBotao;
     CheckBoxConverter: TCheckBox;
     ComboBoxTipo: TComboBox;
+    EditElimIni: TEdit;
+    EditElimFim: TEdit;
     EditLocal: TEdit;
     EditLink: TEdit;
     GroupBoxAndamento: TGroupBox;
     GroupBoxConverter: TGroupBox;
     GroupBoxBaixarYoutube: TGroupBox;
     ImageList24: TImageList;
+    LabelElimIni: TLabel;
+    LabelElimFim: TLabel;
     LabelStatus: TLabel;
     LabelTipo: TLabel;
     LabelArquivo: TLabel;
@@ -51,6 +55,7 @@ type
     FFechando: boolean;
     procedure Baixa(ALinks: TStrings);
     procedure IniciaTarefa(ATarefa: TTarefaThread);
+    function LeCorte(AEdit: TEdit; out ASegundos: double): boolean;
     procedure ModoOcupado(AOcupado: boolean);
     procedure MostraFerramentas;
     procedure TarefaLog(const ATexto: string);
@@ -233,6 +238,7 @@ procedure TPrincipalView.btnConverterClick(Sender: TObject);
 var
   auxPasta: string;
   auxTarefa: TTarefaThread;
+  auxInicio, auxFim: double;
 begin
   if (FArquivos.Count = 0) then
   begin
@@ -246,13 +252,38 @@ begin
     Exit;
   end;
 
+  if not LeCorte(EditElimIni, auxInicio) then Exit;
+  if not LeCorte(EditElimFim, auxFim) then Exit;
+
   if not Riba.AbrePasta('Pasta onde salvar os vídeos convertidos', auxPasta) then Exit;
 
   auxTarefa := TTarefaThread.Create(ttConverter);
   auxTarefa.Itens.Assign(FArquivos);
   auxTarefa.Pasta := auxPasta;
   auxTarefa.Preset := TPresetConversao(ComboBoxTipo.ItemIndex);
+  auxTarefa.CorteInicio := auxInicio;
+  auxTarefa.CorteFim := auxFim;
   IniciaTarefa(auxTarefa);
+end;
+
+//=================================================================== LE CORTE =================================================\\
+// Os segundos de um campo de corte. Vazio = 0 (não corta). Aceita vírgula ou ponto ("2,5").
+// Se o corte passar do tamanho de algum vídeo, quem avisa é a conversão (só ela sabe a duração).
+function TPrincipalView.LeCorte(AEdit: TEdit; out ASegundos: double): boolean;
+var
+  auxTexto: string;
+begin
+  ASegundos := 0;
+  auxTexto := StringReplace(Trim(AEdit.Text), ',', '.', []);
+  if (auxTexto = EmptyStr) then
+    Exit(True);
+
+  Result := Riba.TextoParaNumero(auxTexto, ASegundos) and (ASegundos >= 0);
+  if not Result then
+  begin
+    Riba.Aviso('Converter', 'O corte é em segundos (ex.: 5 ou 2,5). Deixe vazio para não cortar.');
+    AEdit.SetFocus;
+  end;
 end;
 
 //================================================================ BTN ATUALIZAR ===============================================\\
@@ -355,6 +386,8 @@ begin
   EditLink.Enabled := not AOcupado;
   RadioGroupTipo.Enabled := not AOcupado;
   ComboBoxTipo.Enabled := not AOcupado;
+  EditElimIni.Enabled := not AOcupado;
+  EditElimFim.Enabled := not AOcupado;
   btnCancelar.Enabled := AOcupado;
   RadioGroupTipoClick(RadioGroupTipo);
 end;
